@@ -30,7 +30,7 @@ GCC_CFLAGS	= -Wall $(BITS) -fno-strict-aliasing $(FPIC)
 GCC_OPT		= -O3 -ggdb -std=c11 #-DDEBUG
 
 ICC_CFLAGS	= -Wall -wd279 -wd981 -wd1418 -wd1469 -wd383 -wd869 -wd522 -wd810 -wd1684
-ICC_OPT		= -O3 -pipe -finline-functions -fomit-frame-pointer #-march=pentium4 -mcpu=pentium4 
+ICC_OPT		= -O3 -pipe -finline-functions -fomit-frame-pointer #-march=pentium4 -mcpu=pentium4
 
 ifeq ($(CC), gcc)
 	OPT = $(GCC_OPT)
@@ -43,7 +43,7 @@ endif
 
 # Rules
 
-all:	libmichael.so 
+all:	libmichael.so
 
 clean:
 	rm -f *.o *.so

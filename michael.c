@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2007  Scott Schneider, Christos Antonopoulos
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -18,7 +18,7 @@
 
 #include "michael.h"
 
-/* This is large and annoying, but it saves us from needing an 
+/* This is large and annoying, but it saves us from needing an
  * initialization routine. */
 sizeclass sizeclasses[2048 / GRANULARITY] =
 				{
@@ -169,7 +169,7 @@ static inline ssize_t max(ssize_t a, ssize_t b)
 static void* AllocNewSB(size_t size, size_t alignement)
 {
 	void* addr;
-  
+
 	addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 	if (addr == MAP_FAILED) {
 		fprintf(stderr, "AllocNewSB() mmap failed, %lu, tag %d: ", size, queue_head.tag);
@@ -199,7 +199,7 @@ static void organize_desc_list(descriptor* start, size_t count, size_t stride)
 {
 	size_t ptr;
 	size_t i;
- 
+
 	start->Next = (descriptor*)(start + stride);
 	ptr = (size_t)start;
 	for (i = 1; i < count - 1; i++) {
@@ -214,8 +214,8 @@ static void organize_list(void* start, size_t count, size_t stride)
 {
 	size_t ptr;
 	size_t i;
-  
-	ptr = (size_t)start; 
+
+	ptr = (size_t)start;
 	for (i = 1; i < count - 1; i++) {
 		ptr += stride;
 		*((size_t*)ptr) = i + 1;
@@ -223,10 +223,10 @@ static void organize_list(void* start, size_t count, size_t stride)
 }
 
 static descriptor* DescAlloc() {
-  
+
 	descriptor_queue old_queue, new_queue;
 	descriptor* desc;
-  
+
 #ifdef DEBUG
 	fprintf(stderr, "In DescAlloc\n");
 	fflush(stderr);
@@ -272,7 +272,7 @@ void DescRetire(descriptor* desc)
 #ifdef DEBUG
 	fprintf(stderr, "Recycling descriptor %p (sb %p, tag %hu)\n", desc, desc->sb, queue_head.tag);
 	fflush(stderr);
-#endif  
+#endif
 	do {
 		old_queue = queue_head;
 		desc->Next = (descriptor*)old_queue.DescAvail;
@@ -310,7 +310,7 @@ static descriptor* ListGetPartial(sizeclass* sc)
 
 static void ListPutPartial(descriptor* desc)
 {
-	lf_fifo_enqueue(&desc->heap->sc->Partial, (void*)desc);  
+	lf_fifo_enqueue(&desc->heap->sc->Partial, (void*)desc);
 }
 
 static void RemoveEmptyDesc(procheap* heap, descriptor* desc)
@@ -324,9 +324,9 @@ static void RemoveEmptyDesc(procheap* heap, descriptor* desc)
 }
 
 static descriptor* HeapGetPartial(procheap* heap)
-{ 
+{
 	descriptor* desc;
-  
+
 	do {
 		desc = *((descriptor**)&heap->Partial); // casts away the volatile
 		if (desc == NULL) {
@@ -346,12 +346,12 @@ static void HeapPutPartial(descriptor* desc)
 	} while (!compare_and_swap_ptr(&desc->heap->Partial, prev, desc));
 
 	if (prev) {
-		ListPutPartial(prev); 
+		ListPutPartial(prev);
 	}
 }
 
 static void UpdateActive(procheap* heap, descriptor* desc, size_t morecredits)
-{ 
+{
 	active oldactive, newactive;
 	anchor oldanchor, newanchor;
 
@@ -369,7 +369,7 @@ static void UpdateActive(procheap* heap, descriptor* desc, size_t morecredits)
 
 	// Someone installed another active sb
 	// Return credits to sb and make it partial
-	do { 
+	do {
 		newanchor = oldanchor = desc->Anchor;
 		newanchor.count += morecredits;
 		newanchor.state = PARTIAL;
@@ -383,7 +383,7 @@ static descriptor* mask_credits(active oldactive)
 	return (descriptor*)oldactive.ptr;
 }
 
-static void* MallocFromActive(procheap *heap) 
+static void* MallocFromActive(procheap *heap)
 {
 	active newactive, oldactive;
 	descriptor* desc;
@@ -393,7 +393,7 @@ static void* MallocFromActive(procheap *heap)
 	size_t next = 0;
 
 	// First step: reserve block
-	do { 
+	do {
 		newactive = oldactive = heap->Active;
 		if (!(*((size_t*)(&oldactive)))) {
 			return NULL;
@@ -435,15 +435,15 @@ static void* MallocFromActive(procheap *heap)
 #endif
 				newanchor.state = FULL;
 			}
-			else { 
+			else {
 				morecredits = min(oldanchor.count, MAXCREDITS);
 				newanchor.count -= morecredits;
 			}
-		} 
+		}
 	} while (!compare_and_swap64((volatile size_t*)&desc->Anchor, *((size_t*)&oldanchor), *((size_t*)&newanchor)));
 
 #ifdef DEBUG
-	fprintf(stderr, "MallocFromActive() sb %p, Active %p, avail %d, oldanchor.count %hu, newanchor.count %hu, morecredits %lu, MAX %d\n", 
+	fprintf(stderr, "MallocFromActive() sb %p, Active %p, avail %d, oldanchor.count %hu, newanchor.count %hu, morecredits %lu, MAX %d\n",
 			desc->sb, *((void**)&heap->Active), desc->Anchor.avail, oldanchor.count, newanchor.count, morecredits, MAXCREDITS);
 	fflush(stderr);
 #endif
@@ -452,9 +452,9 @@ static void* MallocFromActive(procheap *heap)
 		UpdateActive(heap, desc, morecredits);
 	}
 
-	*((char*)addr) = (char)SMALL; 
+	*((char*)addr) = (char)SMALL;
 	addr += TYPE_SIZE;
-	*((descriptor**)addr) = desc; 
+	*((descriptor**)addr) = desc;
 	return ((void*)((size_t)addr + PTR_SIZE));
 }
 
@@ -464,7 +464,7 @@ static void* MallocFromPartial(procheap* heap)
 	anchor oldanchor, newanchor;
 	size_t morecredits;
 	void* addr;
-  
+
 retry:
 	desc = HeapGetPartial(heap);
 	if (!desc) {
@@ -476,7 +476,7 @@ retry:
 		// reserve blocks
 		newanchor = oldanchor = desc->Anchor;
 		if (oldanchor.state == EMPTY) {
-			DescRetire(desc); 
+			DescRetire(desc);
 			goto retry;
 		}
 
@@ -487,7 +487,7 @@ retry:
 		newanchor.state = (morecredits > 0) ? ACTIVE : FULL;
 	} while (!compare_and_swap64((volatile size_t*)&desc->Anchor, *((size_t*)&oldanchor), *((size_t*)&newanchor)));
 
-	do { 
+	do {
 		// pop reserved block
 		newanchor = oldanchor = desc->Anchor;
 		addr = (void*)((size_t)desc->sb + oldanchor.avail * desc->sz);
@@ -500,9 +500,9 @@ retry:
 		UpdateActive(heap, desc, morecredits);
 	}
 
-	*((char*)addr) = (char)SMALL; 
+	*((char*)addr) = (char)SMALL;
 	addr += TYPE_SIZE;
-	*((descriptor**)addr) = desc; 
+	*((descriptor**)addr) = desc;
 	return ((void *)((size_t)addr + PTR_SIZE));
 }
 
@@ -525,7 +525,7 @@ static void* MallocFromNewSB(procheap* heap)
 	organize_list(desc->sb, desc->maxcount, desc->sz);
 
 #ifdef DEBUG
-	fprintf(stderr, "New SB %p associated with desc %p (sz %u, sbsize %d, heap %p, Anchor.avail %hu, Anchor.count %hu)\n", 
+	fprintf(stderr, "New SB %p associated with desc %p (sz %u, sbsize %d, heap %p, Anchor.avail %hu, Anchor.count %hu)\n",
 			desc->sb, desc, desc->sz, heap->sc->sbsize, heap, desc->Anchor.avail, desc->Anchor.count);
 	fflush(stderr);
 #endif
@@ -538,24 +538,24 @@ static void* MallocFromNewSB(procheap* heap)
 	desc->Anchor.state = ACTIVE;
 
 #ifdef DEBUG
-	fprintf(stderr, "MallocFromNewSB() sz %u, maxcount %u, Anchor.count %hu, newactive.credits %hu, max %ld\n", 
-			desc->sz, desc->maxcount, desc->Anchor.count, newactive.credits, 
+	fprintf(stderr, "MallocFromNewSB() sz %u, maxcount %u, Anchor.count %hu, newactive.credits %hu, max %ld\n",
+			desc->sz, desc->maxcount, desc->Anchor.count, newactive.credits,
 			((ssize_t)desc->maxcount - 1 ) - ((ssize_t)newactive.credits + 1));
 	fflush(stderr);
 #endif
 
 	// memory fence.
-	if (compare_and_swap64((volatile size_t*)&heap->Active, *((size_t*)&oldactive), *((size_t*)&newactive))) { 
+	if (compare_and_swap64((volatile size_t*)&heap->Active, *((size_t*)&oldactive), *((size_t*)&newactive))) {
 		addr = desc->sb;
-		*((char*)addr) = (char)SMALL; 
+		*((char*)addr) = (char)SMALL;
 		addr += TYPE_SIZE;
-		*((descriptor **)addr) = desc; 
+		*((descriptor **)addr) = desc;
 		return (void *)((size_t)addr + PTR_SIZE);
-	} 
+	}
 	else {
 		//Free the superblock desc->sb.
 		munmap(desc->sb, desc->heap->sc->sbsize);
-		DescRetire(desc); 
+		DescRetire(desc);
 		return NULL;
 	}
 }
@@ -563,13 +563,13 @@ static void* MallocFromNewSB(procheap* heap)
 static procheap* find_heap(size_t sz)
 {
 	procheap* heap;
-  
+
 	// We need to fit both the object and the descriptor in a single block
 	sz += HEADER_SIZE;
 	if (sz > 2048) {
 		return NULL;
 	}
-  
+
 	heap = heaps[sz / GRANULARITY];
 	if (heap == NULL) {
 		heap = mmap(NULL, sizeof(procheap), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
@@ -578,7 +578,7 @@ static procheap* find_heap(size_t sz)
 		heap->sc = &sizeclasses[sz / GRANULARITY];
 		heaps[sz / GRANULARITY] = heap;
 	}
-	
+
 	return heap;
 }
 
@@ -591,11 +591,11 @@ static void* alloc_large_block(size_t sz)
 	*((char*)addr) = (char)LARGE;
 	addr += TYPE_SIZE;
 	*((size_t *)addr) = sz + HEADER_SIZE;
-	return (void*)(addr + PTR_SIZE); 
+	return (void*)(addr + PTR_SIZE);
 }
 
 void* do_malloc(size_t sz)
-{ 
+{
 	procheap *heap;
 	void* addr;
 
@@ -616,7 +616,7 @@ void* do_malloc(size_t sz)
 		return addr;
 	}
 
-	while(1) { 
+	while(1) {
 		addr = MallocFromActive(heap);
 		if (addr) {
 #ifdef DEBUG
@@ -641,7 +641,7 @@ void* do_malloc(size_t sz)
 #endif
 			return addr;
 		}
-	} 
+	}
 }
 
 void* malloc(size_t sz)
@@ -649,7 +649,7 @@ void* malloc(size_t sz)
     return do_malloc(sz);
 }
 
-void free(void* ptr) 
+void free(void* ptr)
 {
 	descriptor* desc;
 	void* sb;
@@ -664,7 +664,7 @@ void free(void* ptr)
 	if (!ptr) {
 		return;
 	}
-	
+
 	// get prefix
 	ptr = (void*)((size_t)ptr - HEADER_SIZE);
 	if (*((char*)ptr) == (char)LARGE) {
@@ -676,9 +676,9 @@ void free(void* ptr)
 		return;
 	}
 	desc = *((descriptor**)((size_t)ptr + TYPE_SIZE));
-	
+
 	sb = desc->sb;
-	do { 
+	do {
 		newanchor = oldanchor = desc->Anchor;
 
 		*((size_t*)ptr) = oldanchor.avail;
@@ -700,7 +700,7 @@ void free(void* ptr)
 			fflush(stderr);
 #endif
 			newanchor.state = EMPTY;
-		} 
+		}
 		else {
 			++newanchor.count;
 		}
@@ -715,7 +715,7 @@ void free(void* ptr)
 
 		munmap(sb, heap->sc->sbsize);
 		RemoveEmptyDesc(heap, desc);
-	} 
+	}
 	else if (oldanchor.state == FULL) {
 #ifdef DEBUG
 		fprintf(stderr, "Puting superblock %p to PARTIAL heap\n", sb);
@@ -728,7 +728,7 @@ void free(void* ptr)
 void *calloc(size_t nmemb, size_t size)
 {
 	void *ptr;
-	
+
 	ptr = do_malloc(nmemb*size);
 	if (!ptr) {
 		return NULL;

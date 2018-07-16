@@ -17,7 +17,7 @@ inline size_t compare_and_swap64(volatile size_t *address,
 				size_t old_value,
 				size_t new_value);
 
-inline size_t compare_and_swap_ptr(volatile size_t *address, 
+inline size_t compare_and_swap_ptr(volatile size_t *address,
 				size_t old_value,
 				size_t new_value);
 

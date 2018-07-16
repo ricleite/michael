@@ -11,7 +11,7 @@ typedef struct {
 // The only requirement is that the 5th-8th byte of
 // each element should be available to be used as
 // the pointer for the implementation of a singly-linked
-// list. 
+// list.
 struct queue_elem_t {
 	char 				*_dummy;
 	volatile struct queue_elem_t 	*next;
@@ -24,7 +24,7 @@ typedef struct {
 } lf_fifo_queue_t;
 
 #define LF_FIFO_QUEUE_STATIC_INIT	{{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}}
-					  
+
 /******************************************************************************/
 
 static __inline__ void lf_fifo_queue_init(lf_fifo_queue_t *queue);
@@ -67,7 +67,7 @@ static __inline__ int lf_fifo_enqueue(lf_fifo_queue_t *queue, void *element)
 {
 	top_aba_t old_top;
 	top_aba_t new_top;
-	
+
 	while(1) {
 		old_top.ocount = queue->both.ocount;
 		old_top.top = queue->both.top;
