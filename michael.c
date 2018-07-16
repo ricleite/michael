@@ -152,7 +152,7 @@ sizeclass sizeclasses[2048 / GRANULARITY] =
 				{LF_FIFO_QUEUE_STATIC_INIT, 2040, SBSIZE}, {LF_FIFO_QUEUE_STATIC_INIT, 2048, SBSIZE},
 				};
 
-__thread procheap* heaps[2048 / GRANULARITY] =	{ };
+procheap* heaps[2048 / GRANULARITY] =	{ };
 
 static volatile descriptor_queue queue_head;
 
