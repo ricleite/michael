@@ -35,7 +35,7 @@ typedef struct Descriptor descriptor;
 struct Procheap;
 typedef struct Procheap procheap;
 
-#define TYPE_SIZE	4
+#define TYPE_SIZE	sizeof(size_t)
 #define PTR_SIZE	sizeof(void*)
 #define HEADER_SIZE	(TYPE_SIZE + PTR_SIZE)
 
@@ -59,13 +59,13 @@ typedef struct Procheap procheap;
  *	descriptor* DescAvail;
  */
 typedef struct {
-	unsigned long long 	DescAvail:46, tag:18;
+	size_t 	DescAvail:48, tag:16;
 } descriptor_queue;
 
 /* Superblock descriptor structure. We bumped avail and count 
  * to 24 bits to support larger superblock sizes. */
 typedef struct {
-	unsigned long long 	avail:24,count:24, state:2, tag:14;
+	size_t 	avail:24,count:24, state:2, tag:14;
 } anchor;
 
 struct Descriptor {
@@ -74,18 +74,18 @@ struct Descriptor {
 	descriptor*		Next;
 	void*			sb;		// pointer to superblock
 	procheap*		heap;		// pointer to owner procheap
-	unsigned int		sz;		// block size
-	unsigned int		maxcount;	// superblock size / sz
+	size_t		sz;		// block size
+	size_t		maxcount;	// superblock size / sz
 };
 
 typedef struct {
 	lf_fifo_queue_t		Partial;	// initially empty
-	unsigned int		sz;		// block size
-	unsigned int		sbsize;		// superblock size
+	size_t		sz;		// block size
+	size_t		sbsize;		// superblock size
 } sizeclass;
 
 typedef struct {
-	unsigned long long	ptr:58, credits:6;
+	size_t	ptr:58, credits:6;
 } active;
 
 struct Procheap {
@@ -95,6 +95,11 @@ struct Procheap {
 };
 
 extern void* malloc(size_t sz);
+extern void* calloc(size_t nmemb, size_t size);
+extern void* valloc(size_t size);
+extern void* memalign(size_t boundary, size_t size);
+extern int posix_memalign(void** memptr, size_t alignment, size_t size);
+void* realloc(void* object, size_t size);
 extern void free(void* ptr);
 
 #endif	/* __MAGED_H__ */
